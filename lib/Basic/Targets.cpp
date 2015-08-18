@@ -5497,11 +5497,11 @@ static const unsigned HSAILAddrSpaceMap[] = {
 // If you edit the description strings, make sure you update
 // getPointerWidthV().
 
-static const char *DataLayoutStringHSAIL =
+static const char *DescriptionStringHSAIL =
   "e-p:32:32-i64:64-v16:16-v24:32-v32:32-v48:64-v96:128"
   "-v192:256-v256:256-v512:512-v1024:1024-v2048:2048-n32:64";
 
-static const char *DataLayoutStringHSAIL64 =
+static const char *DescriptionStringHSAIL64 =
   "e-p:32:32-p1:64:64-p2:64:64-p3:32:32-p4:64:64-p5:32:32"
   "-p6:32:32-p7:64:64-p8:32:32-p9:64:64"
   "-i64:64-v16:16-v24:32-v32:32-v48:64-v96:128"
@@ -5524,9 +5524,9 @@ public:
       FullProfile(true) {
 
     if (Triple.getArch() == llvm::Triple::hsail) {
-      DataLayoutString = DataLayoutStringHSAIL;
+      DescriptionString = DescriptionStringHSAIL;
     } else {
-      DataLayoutString = DataLayoutStringHSAIL64;
+      DescriptionString = DescriptionStringHSAIL64;
       IsLargeModel = true;
     }
 
