@@ -146,6 +146,16 @@ namespace clang {
     };
   }
 
+  /// \brief HSAIL builtins
+  namespace HSAIL {
+  enum {
+    LastTIBuiltin = clang::Builtin::FirstTSBuiltin - 1,
+  #define BUILTIN(ID, TYPE, ATTRS) BI##ID,
+  #include "clang/Basic/BuiltinsHSAIL.def"
+    LastTSBuiltin
+  };
+  }
+
   /// \brief MIPS builtins
   namespace Mips {
     enum {

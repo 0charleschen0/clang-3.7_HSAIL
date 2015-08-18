@@ -5484,6 +5484,128 @@ const Builtin::Info HexagonTargetInfo::BuiltinInfo[] = {
 #include "clang/Basic/BuiltinsHexagon.def"
 };
 
+static const unsigned HSAILAddrSpaceMap[] = {
+  1,    // opencl_global
+  3,    // opencl_local
+  2,    // opencl_constant
+  4,    // opencl_generic
+  1,    // cuda_device
+  2,    // cuda_constant
+  3     // cuda_shared
+};
+
+// If you edit the description strings, make sure you update
+// getPointerWidthV().
+
+static const char *DataLayoutStringHSAIL =
+  "e-p:32:32-i64:64-v16:16-v24:32-v32:32-v48:64-v96:128"
+  "-v192:256-v256:256-v512:512-v1024:1024-v2048:2048-n32:64";
+
+static const char *DataLayoutStringHSAIL64 =
+  "e-p:32:32-p1:64:64-p2:64:64-p3:32:32-p4:64:64-p5:32:32"
+  "-p6:32:32-p7:64:64-p8:32:32-p9:64:64"
+  "-i64:64-v16:16-v24:32-v32:32-v48:64-v96:128"
+  "-v192:256-v256:256-v512:512-v1024:1024-v2048:2048-n32:64";
+
+class HSAILTargetInfo : public TargetInfo {
+  static const Builtin::Info BuiltinInfo[];
+  bool IsLargeModel;
+  bool FullProfile;
+
+  enum DeviceKind {
+    HSAIL_NONE,
+    HSAIL_KAVERI
+  } Device;
+
+public:
+  HSAILTargetInfo(const llvm::Triple &Triple)
+    : TargetInfo(Triple),
+      IsLargeModel(false),
+      FullProfile(true) {
+
+    if (Triple.getArch() == llvm::Triple::hsail) {
+      DataLayoutString = DataLayoutStringHSAIL;
+    } else {
+      DataLayoutString = DataLayoutStringHSAIL64;
+      IsLargeModel = true;
+    }
+
+    AddrSpaceMap = &HSAILAddrSpaceMap;
+    UseAddrSpaceMapMangling = true;
+  }
+
+  uint64_t getPointerWidthV(unsigned AddrSpace) const override {
+    switch (AddrSpace) {
+      default:
+        return 64;
+      case 0:
+      case 3:
+      case 5:
+        return 32;
+    }
+  }
+
+  const char *getClobbers() const override {
+    return "";
+  }
+
+  void getGCCRegNames(const char *const *&Names,
+                      unsigned &NumNames) const override {
+    Names = nullptr;
+    NumNames = 0;
+  }
+
+  void getGCCRegAliases(const GCCRegAlias *&Aliases,
+                        unsigned &NumAliases) const override {
+    Aliases = nullptr;
+    NumAliases = 0;
+  }
+
+  bool validateAsmConstraint(const char *&Name,
+                             TargetInfo::ConstraintInfo &info) const override {
+    return true;
+  }
+
+  void getTargetBuiltins(const Builtin::Info *&Records,
+                         unsigned &NumRecords) const override {
+    Records = BuiltinInfo;
+    NumRecords = clang::HSAIL::LastTSBuiltin - Builtin::FirstTSBuiltin;
+  }
+
+  void getTargetDefines(const LangOptions &Opts,
+                        MacroBuilder &Builder) const override {
+    if (IsLargeModel)
+      Builder.defineMacro("__HSAIL64__");
+    else
+      Builder.defineMacro("__HSAIL__");
+
+    if (FullProfile && Opts.OpenCL) {
+      Builder.defineMacro("cl_khr_fp64");
+    }
+  }
+
+  BuiltinVaListKind getBuiltinVaListKind() const override {
+    return TargetInfo::CharPtrBuiltinVaList;
+  }
+
+  bool setCPU(const std::string &Name) override {
+    Device = llvm::StringSwitch<DeviceKind>(Name)
+      .Case("kaveri", HSAIL_KAVERI)
+      .Default(HSAIL_NONE);
+
+    if (Device == HSAIL_NONE)
+      return false;
+
+    return true;
+  }
+};
+
+const Builtin::Info HSAILTargetInfo::BuiltinInfo[] = {
+#define BUILTIN(ID, TYPE, ATTRS)                \
+  { #ID, TYPE, ATTRS, 0, ALL_LANGUAGES },
+#include "clang/Basic/BuiltinsHSAIL.def"
+};
+
 // Shared base class for SPARC v8 (32-bit) and SPARC v9 (64-bit).
 class SparcTargetInfo : public TargetInfo {
   static const TargetInfo::GCCRegAlias GCCRegAliases[];
@@ -7208,6 +7330,10 @@ static TargetInfo *AllocateTarget(const llvm::Triple &Triple) {
   case llvm::Triple::amdgcn:
   case llvm::Triple::r600:
     return new AMDGPUTargetInfo(Triple);
+
+  case llvm::Triple::hsail:
+  case llvm::Triple::hsail64:
+    return new HSAILTargetInfo(Triple);
 
   case llvm::Triple::sparc:
     switch (os) {

@@ -6606,6 +6606,10 @@
 // RUN: %clang_cc1 -x cl -E -dM -ffreestanding -triple=amdgcn < /dev/null | FileCheck -check-prefix AMDGCN %s
 // AMDGCN:#define cl_khr_fp64 1
 
+// RUN: %clang_cc1 -x cl -E -dM -ffreestanding -triple=hsail < /dev/null | FileCheck -check-prefix=HSAIL %s
+// RUN: %clang_cc1 -x cl -E -dM -ffreestanding -triple=hsail64 < /dev/null | FileCheck -check-prefix=HSAIL %s
+// HSAIL:#define cl_khr_fp64 1
+
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=s390x-none-none -fno-signed-char < /dev/null | FileCheck -check-prefix S390X %s
 //
 // S390X:#define __BIGGEST_ALIGNMENT__ 8

@@ -1877,6 +1877,9 @@ Value *CodeGenFunction::EmitTargetBuiltinExpr(unsigned BuiltinID,
   case llvm::Triple::r600:
   case llvm::Triple::amdgcn:
     return EmitAMDGPUBuiltinExpr(BuiltinID, E);
+  case llvm::Triple::hsail:
+  case llvm::Triple::hsail64:
+    return EmitHSAILBuiltinExpr(BuiltinID, E);
   case llvm::Triple::systemz:
     return EmitSystemZBuiltinExpr(BuiltinID, E);
   case llvm::Triple::nvptx:
@@ -6832,6 +6835,355 @@ Value *CodeGenFunction::EmitAMDGPUBuiltinExpr(unsigned BuiltinID,
   case AMDGPU::BI__builtin_amdgpu_classf:
     return emitFPIntBuiltin(*this, E, Intrinsic::AMDGPU_class);
    default:
+    return nullptr;
+  }
+}
+
+static Value *emitHSAILBitExtractBuiltin(CodeGenFunction &CGF,
+                                         const CallExpr *E,
+                                         unsigned IntrinsicID) {
+  Value *F = CGF.CGM.getIntrinsic(IntrinsicID, CGF.ConvertType(E->getType()));
+
+  Value *Args[] = {
+    CGF.EmitScalarExpr(E->getArg(0)),
+    CGF.EmitScalarExpr(E->getArg(1)),
+    CGF.EmitScalarExpr(E->getArg(2))
+  };
+
+  return CGF.Builder.CreateCall(F, Args);
+}
+
+static Value *emitHSAILBitInsertBuiltin(CodeGenFunction &CGF,
+                                        const CallExpr *E,
+                                        unsigned IntrinsicID) {
+  Value *F = CGF.CGM.getIntrinsic(IntrinsicID, CGF.ConvertType(E->getType()));
+
+  Value *Args[] = {
+    CGF.EmitScalarExpr(E->getArg(0)),
+    CGF.EmitScalarExpr(E->getArg(1)),
+    CGF.EmitScalarExpr(E->getArg(2)),
+    CGF.EmitScalarExpr(E->getArg(3))
+  };
+
+  return CGF.Builder.CreateCall(F, Args);
+}
+
+static Value *emitHSAILUnaryRetTypeBuiltin(CodeGenFunction &CGF,
+                                           const CallExpr *E,
+                                           unsigned IntrinsicID) {
+  Value *F = CGF.CGM.getIntrinsic(IntrinsicID, CGF.ConvertType(E->getType()));
+
+  Value *Args[] = {
+    CGF.EmitScalarExpr(E->getArg(0))
+  };
+
+  return CGF.Builder.CreateCall(F, Args);
+}
+
+static Value *emitHSAILUnarySrcTypeBuiltin(CodeGenFunction &CGF,
+                                           const CallExpr *E,
+                                           unsigned IntrinsicID) {
+  Value *Src0 = CGF.EmitScalarExpr(E->getArg(0));
+  Value *F = CGF.CGM.getIntrinsic(IntrinsicID, Src0->getType());
+  return CGF.Builder.CreateCall(F, Src0);
+}
+
+static Value *emitHSAILBinaryRetTypeBuiltin(CodeGenFunction &CGF,
+                                            const CallExpr *E,
+                                            unsigned IntrinsicID) {
+  Value *F = CGF.CGM.getIntrinsic(IntrinsicID, CGF.ConvertType(E->getType()));
+
+  Value *Args[] = {
+    CGF.EmitScalarExpr(E->getArg(0)),
+    CGF.EmitScalarExpr(E->getArg(1))
+  };
+
+  return CGF.Builder.CreateCall(F, Args);
+}
+
+static Value *emitHSAILTernaryRetTypeBuiltin(CodeGenFunction &CGF,
+                                             const CallExpr *E,
+                                             unsigned IntrinsicID) {
+  Value *F = CGF.CGM.getIntrinsic(IntrinsicID, CGF.ConvertType(E->getType()));
+
+  Value *Args[] = {
+    CGF.EmitScalarExpr(E->getArg(0)),
+    CGF.EmitScalarExpr(E->getArg(1)),
+    CGF.EmitScalarExpr(E->getArg(2))
+  };
+
+  return CGF.Builder.CreateCall(F, Args);
+}
+
+static Value *emitHSAILInstModBuiltin(CodeGenFunction &CGF,
+                                      const CallExpr *E,
+                                      unsigned IntrinsicID) {
+  Value *FTZ = CGF.EmitScalarExpr(E->getArg(0));
+  Value *Round = CGF.EmitScalarExpr(E->getArg(1));
+
+  Value *Src0 = CGF.EmitScalarExpr(E->getArg(2));
+  Value *Src1 = nullptr;
+  Value *Src2 = nullptr;
+
+  unsigned NumArgs = E->getNumArgs();
+  switch (NumArgs) {
+  case 3:
+    break;
+  case 4:
+    Src1 = CGF.EmitScalarExpr(E->getArg(3));
+    break;
+  case 5:
+    Src1 = CGF.EmitScalarExpr(E->getArg(3));
+    Src2 = CGF.EmitScalarExpr(E->getArg(4));
+    break;
+  default:
+    return nullptr;
+  }
+
+  Value *Args[5] = {
+    FTZ,
+    Round,
+    Src0,
+    Src1,
+    Src2
+  };
+
+  Value *F = CGF.CGM.getIntrinsic(IntrinsicID, Src0->getType());
+  return CGF.Builder.CreateCall(F, makeArrayRef(Args, NumArgs));
+}
+
+static Value *emitHSAILInstModNoRoundBuiltin(CodeGenFunction &CGF,
+                                             const CallExpr *E,
+                                             unsigned IntrinsicID) {
+  Value *FTZ = CGF.EmitScalarExpr(E->getArg(0));
+  Value *Src0 = CGF.EmitScalarExpr(E->getArg(1));
+  Value *Src1 = nullptr;
+
+  unsigned NumArgs = E->getNumArgs();
+  switch (NumArgs) {
+  case 2:
+    break;
+  case 3:
+    Src1 = CGF.EmitScalarExpr(E->getArg(2));
+    break;
+  default:
+    return nullptr;
+  }
+
+  Value *Args[3] = {
+    FTZ,
+    Src0,
+    Src1
+  };
+
+  Value *F = CGF.CGM.getIntrinsic(IntrinsicID, Src0->getType());
+  return CGF.Builder.CreateCall(F, makeArrayRef(Args, NumArgs));
+}
+
+static Value *emitHSAILActiveLaneMaskBuiltin(CodeGenFunction &CGF,
+                                             const CallExpr *E,
+                                             unsigned IntrinsicID) {
+  Value *Args[] = {
+    CGF.EmitScalarExpr(E->getArg(0)),
+    CGF.EmitScalarExpr(E->getArg(1)),
+  };
+
+  // Intrinsic returns a struct of 4 elements, the builtin returns a
+  // 4-vector. Pack the struct elements into the vector.
+  Value *F = CGF.CGM.getIntrinsic(IntrinsicID);
+  Value *Call = CGF.Builder.CreateCall(F, Args);
+
+  llvm::VectorType *V4I64Ty
+    = llvm::VectorType::get(CGF.Builder.getInt64Ty(), 4);
+  Value *Vec = UndefValue::get(V4I64Ty);
+
+  for (unsigned I = 0; I < 4; ++I) {
+    Value *Elt = CGF.Builder.CreateExtractValue(Call, I);
+    Value *EltIdx = CGF.Builder.getInt32(I);
+    Vec = CGF.Builder.CreateInsertElement(Vec, Elt, EltIdx);
+  }
+
+  return Vec;
+}
+
+static Value *emitHSAILActiveLanePermuteBuiltin(CodeGenFunction &CGF,
+                                                const CallExpr *E,
+                                                unsigned IntrinsicID) {
+  Value *Args[5];
+  for (unsigned I = 0; I < 5; ++I)
+    Args[I] = CGF.EmitScalarExpr(E->getArg(I));
+
+  Value *F = CGF.CGM.getIntrinsic(IntrinsicID, CGF.ConvertType(E->getType()));
+  return CGF.Builder.CreateCall(F, Args);
+}
+
+// Builtin with overloaded return type and one operand.
+static Value *emitHSAILWorkSizeBuiltin(CodeGenFunction &CGF,
+                                       const CallExpr *E,
+                                       unsigned IntrinsicID) {
+  Value *F = CGF.CGM.getIntrinsic(IntrinsicID, CGF.ConvertType(E->getType()));
+  return CGF.Builder.CreateCall(F, CGF.EmitScalarExpr(E->getArg(0)));
+}
+
+// Overloaded return type, no arguments.
+static Value *emitHSAILWorkitemFlatBuiltin(CodeGenFunction &CGF,
+                                           const CallExpr *E,
+                                           unsigned IntrinsicID) {
+  Value *F = CGF.CGM.getIntrinsic(IntrinsicID, CGF.ConvertType(E->getType()));
+  return CGF.Builder.CreateCall(F, {});
+}
+
+Value *CodeGenFunction::EmitHSAILBuiltinExpr(unsigned BuiltinID,
+                                             const CallExpr *E) {
+  switch (BuiltinID) {
+  case HSAIL::BI__builtin_hsail_smulhi:
+  case HSAIL::BI__builtin_hsail_smulhil:
+    return emitHSAILBinaryRetTypeBuiltin(*this, E, Intrinsic::hsail_smulhi);
+  case HSAIL::BI__builtin_hsail_umulhi:
+  case HSAIL::BI__builtin_hsail_umulhil:
+    return emitHSAILBinaryRetTypeBuiltin(*this, E, Intrinsic::hsail_umulhi);
+
+  case HSAIL::BI__builtin_hsail_sbitextract:
+  case HSAIL::BI__builtin_hsail_sbitextractl:
+    return emitHSAILBitExtractBuiltin(*this, E, Intrinsic::hsail_sbitextract);
+
+  case HSAIL::BI__builtin_hsail_ubitextract:
+  case HSAIL::BI__builtin_hsail_ubitextractl:
+    return emitHSAILBitExtractBuiltin(*this, E, Intrinsic::hsail_ubitextract);
+
+  case HSAIL::BI__builtin_hsail_sbitinsert:
+  case HSAIL::BI__builtin_hsail_sbitinsertl:
+    return emitHSAILBitInsertBuiltin(*this, E, Intrinsic::hsail_sbitinsert);
+
+  case HSAIL::BI__builtin_hsail_ubitinsert:
+  case HSAIL::BI__builtin_hsail_ubitinsertl:
+    return emitHSAILBitInsertBuiltin(*this, E, Intrinsic::hsail_ubitinsert);
+
+  case HSAIL::BI__builtin_hsail_bitmask:
+  case HSAIL::BI__builtin_hsail_bitmaskl:
+    return emitHSAILBinaryRetTypeBuiltin(*this, E, Intrinsic::hsail_bitmask);
+
+  case HSAIL::BI__builtin_hsail_bitrev:
+  case HSAIL::BI__builtin_hsail_bitrevl:
+    return emitHSAILUnaryRetTypeBuiltin(*this, E, Intrinsic::hsail_bitrev);
+
+  case HSAIL::BI__builtin_hsail_bitselect:
+  case HSAIL::BI__builtin_hsail_bitselectl:
+    return emitHSAILTernaryRetTypeBuiltin(*this, E, Intrinsic::hsail_bitselect);
+
+  case HSAIL::BI__builtin_hsail_sfirstbit:
+  case HSAIL::BI__builtin_hsail_sfirstbitl:
+    return emitHSAILUnarySrcTypeBuiltin(*this, E, Intrinsic::hsail_sfirstbit);
+
+  case HSAIL::BI__builtin_hsail_ufirstbit:
+  case HSAIL::BI__builtin_hsail_ufirstbitl:
+    return emitHSAILUnarySrcTypeBuiltin(*this, E, Intrinsic::hsail_ufirstbit);
+
+  case HSAIL::BI__builtin_hsail_lastbit:
+  case HSAIL::BI__builtin_hsail_lastbitl:
+    return emitHSAILUnarySrcTypeBuiltin(*this, E, Intrinsic::hsail_lastbit);
+
+  case HSAIL::BI__builtin_hsail_fadd:
+  case HSAIL::BI__builtin_hsail_faddf:
+    return emitHSAILInstModBuiltin(*this, E, Intrinsic::hsail_fadd);
+
+  case HSAIL::BI__builtin_hsail_fceil:
+  case HSAIL::BI__builtin_hsail_fceilf:
+    return emitHSAILInstModNoRoundBuiltin(*this, E, Intrinsic::hsail_fceil);
+
+  case HSAIL::BI__builtin_hsail_fdiv:
+  case HSAIL::BI__builtin_hsail_fdivf:
+    return emitHSAILInstModBuiltin(*this, E, Intrinsic::hsail_fdiv);
+
+  case HSAIL::BI__builtin_hsail_ffloor:
+  case HSAIL::BI__builtin_hsail_ffloorf:
+    return emitHSAILInstModNoRoundBuiltin(*this, E, Intrinsic::hsail_ffloor);
+
+  case HSAIL::BI__builtin_hsail_ffma:
+  case HSAIL::BI__builtin_hsail_ffmaf:
+    return emitHSAILInstModBuiltin(*this, E, Intrinsic::hsail_ffma);
+
+  case HSAIL::BI__builtin_hsail_ffract:
+  case HSAIL::BI__builtin_hsail_ffractf:
+    return emitHSAILInstModNoRoundBuiltin(*this, E, Intrinsic::hsail_ffract);
+
+  case HSAIL::BI__builtin_hsail_fmax:
+  case HSAIL::BI__builtin_hsail_fmaxf:
+    return emitHSAILInstModNoRoundBuiltin(*this, E, Intrinsic::hsail_fmax);
+
+  case HSAIL::BI__builtin_hsail_fmin:
+  case HSAIL::BI__builtin_hsail_fminf:
+    return emitHSAILInstModNoRoundBuiltin(*this, E, Intrinsic::hsail_fmin);
+
+  case HSAIL::BI__builtin_hsail_fmul:
+  case HSAIL::BI__builtin_hsail_fmulf:
+    return emitHSAILInstModBuiltin(*this, E, Intrinsic::hsail_fmul);
+
+  case HSAIL::BI__builtin_hsail_frint:
+  case HSAIL::BI__builtin_hsail_frintf:
+    return emitHSAILInstModNoRoundBuiltin(*this, E, Intrinsic::hsail_frint);
+
+  case HSAIL::BI__builtin_hsail_fsqrt:
+  case HSAIL::BI__builtin_hsail_fsqrtf:
+    return emitHSAILInstModBuiltin(*this, E, Intrinsic::hsail_fsqrt);
+
+  case HSAIL::BI__builtin_hsail_fsub:
+  case HSAIL::BI__builtin_hsail_fsubf:
+    return emitHSAILInstModBuiltin(*this, E, Intrinsic::hsail_fsub);
+
+
+
+  case HSAIL::BI__builtin_hsail_fmad:
+  case HSAIL::BI__builtin_hsail_fmadf:
+    return emitHSAILInstModBuiltin(*this, E, Intrinsic::hsail_fmad);
+
+
+  case HSAIL::BI__builtin_hsail_class:
+  case HSAIL::BI__builtin_hsail_classf:
+    return emitFPIntBuiltin(*this, E, Intrinsic::hsail_class);
+
+  case HSAIL::BI__builtin_hsail_ncosf:
+    return emitUnaryFPBuiltin(*this, E, Intrinsic::hsail_ncos);
+
+  case HSAIL::BI__builtin_hsail_nexp2f:
+    return emitUnaryFPBuiltin(*this, E, Intrinsic::hsail_nexp2);
+
+  case HSAIL::BI__builtin_hsail_nfma:
+  case HSAIL::BI__builtin_hsail_nfmaf:
+    return emitTernaryFPBuiltin(*this, E, Intrinsic::hsail_nfma);
+
+  case HSAIL::BI__builtin_hsail_nrcpf:
+    return emitUnaryFPBuiltin(*this, E, Intrinsic::hsail_nrcp);
+
+  case HSAIL::BI__builtin_hsail_nrsqrtf:
+    return emitUnaryFPBuiltin(*this, E, Intrinsic::hsail_nrsqrt);
+
+  case HSAIL::BI__builtin_hsail_nsinf:
+    return emitUnaryFPBuiltin(*this, E, Intrinsic::hsail_nsin);
+
+  case HSAIL::BI__builtin_hsail_nsqrtf:
+    return emitUnaryFPBuiltin(*this, E, Intrinsic::hsail_nsqrt);
+
+  case HSAIL::BI__builtin_hsail_activelanemask:
+    return emitHSAILActiveLaneMaskBuiltin(*this, E,
+                                          Intrinsic::hsail_activelanemask);
+
+  case HSAIL::BI__builtin_hsail_activelanepermute:
+  case HSAIL::BI__builtin_hsail_activelanepermutel:
+    return emitHSAILActiveLanePermuteBuiltin(*this, E,
+                                             Intrinsic::hsail_activelanepermute);
+
+
+  case HSAIL::BI__builtin_hsail_workitemabsid:
+  case HSAIL::BI__builtin_hsail_workitemabsidl:
+    return emitHSAILWorkSizeBuiltin(*this, E, Intrinsic::hsail_workitemabsid);
+
+  case HSAIL::BI__builtin_hsail_workitemflatabsid:
+  case HSAIL::BI__builtin_hsail_workitemflatabsidl:
+    return emitHSAILWorkitemFlatBuiltin(*this, E,
+                                        Intrinsic::hsail_workitemflatabsid);
+
+  default:
     return nullptr;
   }
 }
