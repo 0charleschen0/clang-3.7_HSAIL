@@ -1,0 +1,181 @@
+//==- BuiltinsHSAIL.def - HSAIL Builtin function database ----------*- C++ -*-==//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// This file defines the HSAIL-specific builtin function database. Users of this
+// file must define the BUILTIN macro to make use of this information.
+//
+//===----------------------------------------------------------------------===//
+
+// The format of this database matches clang/Basic/Builtins.def.
+
+// 5.2 Integer Arithmetic Instructions
+BUILTIN(__builtin_hsail_smulhi, "iii", "nc")
+BUILTIN(__builtin_hsail_smulhil, "WiWiWi", "nc")
+BUILTIN(__builtin_hsail_umulhi, "UiUiUi", "nc")
+BUILTIN(__builtin_hsail_umulhil, "UWiUWiUWi", "nc")
+
+// 5.4 24-Bit Integer Optimization Instructions
+BUILTIN(__builtin_hsail_smad24, "iiii", "nc")
+BUILTIN(__builtin_hsail_umad24, "UiUiUiUi", "nc")
+BUILTIN(__builtin_hsail_smad24hi, "iiii", "nc")
+BUILTIN(__builtin_hsail_umad24hi, "UiUiUiUi", "nc")
+BUILTIN(__builtin_hsail_smul24, "iii", "nc")
+BUILTIN(__builtin_hsail_umul24, "UiUiUi", "nc")
+BUILTIN(__builtin_hsail_smul24hi, "iii", "nc")
+BUILTIN(__builtin_hsail_umul24hi, "UiUiUi", "nc")
+
+// 5.7 Bit String Instructions
+BUILTIN(__builtin_hsail_sbitextract, "iiUiUi", "nc")
+BUILTIN(__builtin_hsail_sbitextractl, "WiWiUiUi", "nc")
+BUILTIN(__builtin_hsail_ubitextract, "UiUiUiUi", "nc")
+BUILTIN(__builtin_hsail_ubitextractl, "UWiUWiUiUi", "nc")
+BUILTIN(__builtin_hsail_sbitinsert, "iiiUiUi", "nc")
+BUILTIN(__builtin_hsail_sbitinsertl, "WiWiWiUiUi", "nc")
+BUILTIN(__builtin_hsail_ubitinsert, "iiiUiUi", "nc")
+BUILTIN(__builtin_hsail_ubitinsertl, "UWiUWiUWiUiUi", "nc")
+BUILTIN(__builtin_hsail_bitmask, "UiUiUi", "nc")
+BUILTIN(__builtin_hsail_bitmaskl, "UWiUiUi", "nc")
+BUILTIN(__builtin_hsail_bitrev, "UiUi", "nc")
+BUILTIN(__builtin_hsail_bitrevl, "UWiUWi", "nc")
+BUILTIN(__builtin_hsail_bitselect, "UiUiUiUi", "nc")
+BUILTIN(__builtin_hsail_bitselectl, "UWiUWiUWiUWi", "nc")
+BUILTIN(__builtin_hsail_sfirstbit, "ii", "nc")
+BUILTIN(__builtin_hsail_sfirstbitl, "iWi", "nc")
+BUILTIN(__builtin_hsail_ufirstbit, "UiUi", "nc")
+BUILTIN(__builtin_hsail_ufirstbitl, "UiUWi", "nc")
+BUILTIN(__builtin_hsail_lastbit, "UiUi", "nc")
+BUILTIN(__builtin_hsail_lastbitl, "UiUWi", "nc")
+
+// 5.11 Floating-Point Arithmetic Instructions
+BUILTIN(__builtin_hsail_fadd, "dIbIidd", "nc")
+BUILTIN(__builtin_hsail_faddf, "fIbIiff", "nc")
+
+BUILTIN(__builtin_hsail_fceil, "dIbd", "nc")
+BUILTIN(__builtin_hsail_fceilf, "fIbf", "nc")
+
+BUILTIN(__builtin_hsail_fdiv, "dIbIidd", "nc")
+BUILTIN(__builtin_hsail_fdivf, "fIbIiff", "nc")
+
+BUILTIN(__builtin_hsail_ffloor, "dIbd", "nc")
+BUILTIN(__builtin_hsail_ffloorf, "fIbf", "nc")
+
+BUILTIN(__builtin_hsail_ffma, "dIbIiddd", "nc")
+BUILTIN(__builtin_hsail_ffmaf, "fIbIifff", "nc")
+
+BUILTIN(__builtin_hsail_ffract, "dIbd", "nc")
+BUILTIN(__builtin_hsail_ffractf, "fIbf", "nc")
+
+BUILTIN(__builtin_hsail_fmax, "dIbdd", "nc")
+BUILTIN(__builtin_hsail_fmaxf, "fIbff", "nc")
+
+BUILTIN(__builtin_hsail_fmin, "dIbdd", "nc")
+BUILTIN(__builtin_hsail_fminf, "fIbff", "nc")
+
+BUILTIN(__builtin_hsail_fmul, "dIbIidd", "nc")
+BUILTIN(__builtin_hsail_fmulf, "fIbIiff", "nc")
+
+BUILTIN(__builtin_hsail_frint, "dIbd", "nc")
+BUILTIN(__builtin_hsail_frintf, "fIbf", "nc")
+
+BUILTIN(__builtin_hsail_fsqrt, "dIbIid", "nc")
+BUILTIN(__builtin_hsail_fsqrtf, "fIbIif", "nc")
+
+BUILTIN(__builtin_hsail_fsub, "dIbIidd", "nc")
+BUILTIN(__builtin_hsail_fsubf, "fIbIiff", "nc")
+
+
+// 5.12 Floating-Point Optimization Instruction
+BUILTIN(__builtin_hsail_fmad, "dIbIiddd", "nc")
+BUILTIN(__builtin_hsail_fmadf, "fIbIifff", "nc")
+
+
+// 5.13 Floating-Point Bit Instructions
+BUILTIN(__builtin_hsail_class, "bdi", "nc")
+BUILTIN(__builtin_hsail_classf, "bfi", "nc")
+
+
+// 5.14 Native Floating-Point Instructions
+BUILTIN(__builtin_hsail_ncosf, "ff", "nc")
+BUILTIN(__builtin_hsail_nexp2f, "ff", "nc")
+BUILTIN(__builtin_hsail_nfma, "dddd", "nc")
+BUILTIN(__builtin_hsail_nfmaf, "ffff", "nc")
+BUILTIN(__builtin_hsail_nlog2f, "ff", "nc")
+BUILTIN(__builtin_hsail_nrcpf, "ff", "nc")
+BUILTIN(__builtin_hsail_nrsqrtf, "ff", "nc")
+BUILTIN(__builtin_hsail_nsinf, "ff", "nc")
+BUILTIN(__builtin_hsail_nsqrtf, "ff", "nc")
+
+// 5.15 Multimedia Instructions
+BUILTIN(__builtin_hsail_bitalign, "iiii", "nc")
+BUILTIN(__builtin_hsail_bytealign, "iiii", "nc")
+BUILTIN(__builtin_hsail_lerp, "iiii", "nc")
+BUILTIN(__builtin_hsail_packcvt, "iffff", "nc")
+BUILTIN(__builtin_hsail_unpackcvt, "fiIi", "nc")
+BUILTIN(__builtin_hsail_sad_u32_u32, "UiUiUiUi", "nc")
+BUILTIN(__builtin_hsail_sad_u32_u16x2, "UiUiUiUi", "nc")
+BUILTIN(__builtin_hsail_sad_u32_u8x4, "UiUiUiUi", "nc")
+BUILTIN(__builtin_hsail_sadhi, "UiUiUiUi", "nc")
+
+// 5.16 Segment Checking (segmentp) Instruction
+BUILTIN(__builtin_hsail_segmentp, "bIiIbc*4", "nc")
+
+// 6.9 Memory Fence (memfence) Instruction
+BUILTIN(__builtin_hsail_memfence, "vIiIi", "n")
+
+// 7.6 Image Fence (imagefence) Instruction
+BUILTIN(__builtin_hsail_imagefence, "v", "n")
+
+// 9.1 Barrier Instructions
+BUILTIN(__builtin_hsail_barrier, "vIi", "n")
+BUILTIN(__builtin_hsail_wavebarrier, "v", "n")
+
+// 9.4 Cross-Lane Instructions
+BUILTIN(__builtin_hsail_activelanecount, "UiIib", "nc")
+BUILTIN(__builtin_hsail_activelaneid, "UiIi", "nc")
+BUILTIN(__builtin_hsail_activelanemask, "E4WiIib", "n")
+BUILTIN(__builtin_hsail_activelanepermute, "UiIiiiib", "n")
+BUILTIN(__builtin_hsail_activelanepermutel, "UWiIiWiiWib", "n")
+
+// 11.1 Kernel Dispatch Packet Instructions
+BUILTIN(__builtin_hsail_currentworkgroupsize, "UiIi", "nc")
+BUILTIN(__builtin_hsail_currentworkitemflatid, "Ui", "nc")
+BUILTIN(__builtin_hsail_dim, "Ui", "nc")
+BUILTIN(__builtin_hsail_gridgroups, "UiIi", "nc")
+BUILTIN(__builtin_hsail_gridsize, "UiIi", "nc")
+// __builtin_hsail_packetcompletionsig
+BUILTIN(__builtin_hsail_packetid, "UWi", "nc")
+BUILTIN(__builtin_hsail_workgroupid, "UiIi", "nc")
+BUILTIN(__builtin_hsail_workgroupsize, "UiIi", "nc")
+BUILTIN(__builtin_hsail_workitemabsid, "UiIi", "nc")
+BUILTIN(__builtin_hsail_workitemabsidl, "UWiIi", "nc")
+BUILTIN(__builtin_hsail_workitemflatabsid, "Ui", "nc")
+BUILTIN(__builtin_hsail_workitemflatabsidl, "UWi", "nc")
+BUILTIN(__builtin_hsail_workitemflatid, "Ui", "nc")
+BUILTIN(__builtin_hsail_workitemid, "UiIi", "nc")
+
+// 11.4 Miscellaneous Instructions
+BUILTIN(__builtin_hsail_clock, "UWi", "n")
+BUILTIN(__builtin_hsail_cuid, "Ui", "nc")
+BUILTIN(__builtin_hsail_groupbaseptr, "c*3", "nc")
+BUILTIN(__builtin_hsail_kernargbaseptr, "c*7", "nc")
+BUILTIN(__builtin_hsail_laneid, "Ui", "nc")
+BUILTIN(__builtin_hsail_maxcuid, "Ui", "nc")
+BUILTIN(__builtin_hsail_maxwaveid, "Ui", "nc")
+
+BUILTIN(__builtin_hsail_waveid, "Ui", "nc")
+
+// GCN extensions
+BUILTIN(__builtin_hsail_gcn_bfm, "UiUiUi", "nc")
+BUILTIN(__builtin_hsail_gcn_msad, "UiUiUiUi", "nc")
+BUILTIN(__builtin_hsail_gcn_qsad, "UWiUWiUWiUWi", "nc")
+BUILTIN(__builtin_hsail_gcn_mqsad, "UWiUWiUiUWi", "nc")
+BUILTIN(__builtin_hsail_gcn_sadw, "UiUiUiUi", "nc")
+BUILTIN(__builtin_hsail_gcn_sadd, "UiUiUiUi", "nc")
+
+#undef BUILTIN
